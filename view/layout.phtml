@@ -1,0 +1,17 @@
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" href="./css/main.css" />
+	<link rel="stylesheet" type="text/css" href="./css/dataTables/default.css" />
+	
+	<script src="scripts/lib/jquery-1.10.2.min.js"></script>
+	<script src="scripts/lib/jquery.dataTables-1.9.4.min.js"></script>
+	<script src="scripts/lib/common.js"></script>
+	
+	<script>
+		var jsViewVars = <?php echo $this->get_view_vars_json(); ?>
+	</script>
+</head>
+<body>
+<?php require_once($viewscript); ?>
+</body>
+</html>
