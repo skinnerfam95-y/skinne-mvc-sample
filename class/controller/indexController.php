@@ -20,7 +20,7 @@ class indexController{
 		$records = new records();
 		
 		$partial->setRecords(
-				$records->getRecords($db)
+			$records->getRecords($db)
 		);
 		
 		return $partial;
@@ -29,8 +29,18 @@ class indexController{
 	public function saveAction($db){
 		$records = new records();
 		
-		$records->saveRecord($_REQUEST, $db);
+		$rtn = $records->saveRecord($_REQUEST, $db);
 		
-		return '1';
+		// TODO: Better return value
+		return json_encode($rtn);
+	}
+	
+	public function deleteAction($db){
+		$records = new records();
+		$records->deleteRecordById($_REQUEST['id'], $db);
+		
+		$rtn = new stdClass();
+		$rtn->success = true;
+		return json_encode($rtn);
 	}
 }
