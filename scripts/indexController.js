@@ -1,18 +1,5 @@
 $(function(){
-	$('#inputEdit').hide();
 	recordManager.init(jsViewVars.Records);
-	recordManager.bind();
-	
-	$("#myTable").dataTable({
-		"aaSorting"   : [[ 1, "desc" ]],
-		"bStateSave"  : true,
-	    "fnStateLoad" : function (oSettings) {
-	    	// Disabling the state load permits a saved state
-	    	// as a page is redrawn (ajax'd for instance)
-	    	// but resets the state each time the page is loaded
-	    	return null;
-	    }		
-	});
 });
 
 var recordManager= {
@@ -21,26 +8,60 @@ var recordManager= {
 	
 	init : function(records){
 		this.records = records;
+
+		this.setStateAdd();
+
+		$('#myTable').dataTable({
+			'aaSorting'   : [[ 1, 'desc' ]],
+			'bStateSave'  : true,
+		    'fnStateLoad' : function (oSettings) {
+		    	// Disabling the state load permits a saved state
+		    	// as a page is redrawn (ajax'd for instance)
+		    	// but resets the state each time the page is loaded
+		    	return null;
+		    }		
+		});
+		
+		this.bind();
+	},
+	
+	setStateAdd : function(){
+		$('#inputid').html('{new record}');
+		$('#inputSave').val('Add');
+		
+		this.editIdx = null;
+		
+		this.resetInputFields();
+		
+		$('#inputCancel').hide();
+	},
+	
+	resetInputFields : function(){
+		$('#inputval').val('');
+	},
+	
+	setStateModify : function(rowNum, data){
+		$('#inputCancel').show();
+		$.each(data, function(field, val){
+			if($('#input' + field).length === 0){
+				return true; // skip to next record
+			}else if(field === 'id'){
+				$('#inputid').html(data['id']);
+			}else{
+				$('#input' + field).val(data[field]);
+			}
+		});
+		
+		$('#inputSave').val('Save');
+		
+		this.editIdx = rowNum;
 	},
 	
 	bind : function(){
 		var $this = this;
 		
-		$('#inputAdd').click(function(){
-			$('#inputAdd').hide();
-			$('#inputEdit').show();
-			
-			$('#inputId').html('{new record}');
-			$('#inputVal').val('');
-			
-			var newRowNum = $this.records.length;
-			$this.records.push({
-				'rowNum' : newRowNum,
-				'id' : null,
-				'val': null
-			});
-			
-			$this.editIdx = newRowNum;
+		$('#recordListTable .dataTables_filter label').click(function(){
+			$('#recordListTable .dataTables_filter input').val('').keyup();
 		});
 		
 		$('#inputSave').click(function(){
@@ -50,21 +71,48 @@ var recordManager= {
 				'dataType' : 'json',
 				'data' : $this.records[$this.editIdx],
 				'success' : function(data, textStatus, jqXHR){
+					// Set the ID from an insert
 					$this.records[$this.editIdx]['id'] = data.id;
-					$this.editIdx = null;
-					$('#inputAdd').show();
-					$('#inputEdit').hide();
 
+					$this.setStateAdd();
+					
 					$this.ajaxRecordListTable();
 				}
 			});
 		});
 		
+		$('#inputCancel').click(function(){
+			$this.cleanupUnsavedNew();
+			$this.setStateAdd();
+		});
+		
 		$('.updateStore').change(function(){
-			$this.records[$this.editIdx]['val'] = $('#inputVal').val();
+			if($this.editIdx === null){
+				var newRowNum = $this.records.length;
+				
+				// IMPORTANT: derive fields
+				$this.records.push({
+					'rowNum' : newRowNum,
+					'id' : null,
+					'val': null
+				});
+				
+				$this.editIdx = newRowNum;
+			}
+			$this.records[$this.editIdx]['val'] = $('#inputval').val();
+			$('#inputCancel').show();
 		});
 		
 		this.bindRows();
+	},
+
+	cleanupUnsavedNew : function(){
+		// TODO: add a save warning if canceling the edit
+		if(this.editIdx !== null){
+			if(this.records[this.editIdx]['id'] === null){
+				this.records.splice(this.editIdx, 1);
+			}
+		}
 	},
 	
 	bindRows : function(){
@@ -74,12 +122,10 @@ var recordManager= {
 			var idParts = this.parentNode.parentNode.id.split('_');
 			var rowNum = idParts[idParts.length - 1];
 			
-			$('#inputAdd').hide();
-			$('#inputEdit').show();
-			$('#inputId').html($this.records[rowNum]['id']);
-			$('#inputVal').val($this.records[rowNum]['val']);
+			$this.cleanupUnsavedNew();
 			
-			$this.editIdx = rowNum;
+			$this.setStateModify(rowNum, $this.records[rowNum]);
+			
 			// TODO: Improve this to bind to specific row, but still delegate?
 			return false; // stop propegation...otherwise calls for every row
 		});
@@ -94,7 +140,11 @@ var recordManager= {
 					'dataType' : 'json',
 					'data' : {id:$this.records[rowNum]['id']},
 					'success' : function(data, textStatus, jqXHR){
+						$this.cleanupUnsavedNew();
+						$this.setStateAdd();
+						
 						$this.records.splice(rowNum,1);
+						
 						$this.ajaxRecordListTable();
 					}
 				});
@@ -114,8 +164,8 @@ var recordManager= {
 			'dataType' : 'text',
 			'success' : function(data, textStatus, jqXHR){
 				$('#recordListTable').html(data);
-				$("table").dataTable({
-			        "bStateSave": true
+				$('table').dataTable({
+			        'bStateSave': true
 			    });
 				$this.bindRows();
 			}

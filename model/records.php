@@ -9,7 +9,7 @@ class records{
 				records, 
 				(SELECT @rn:=-1) t2;');
 		$stmt->execute();
-		$rslt = $stmt->fetchAll();
+		$rslt = $stmt->fetchAll(PDO::FETCH_ASSOC);
 		
 		return $rslt;
 // 		return 	
