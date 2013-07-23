@@ -33,7 +33,7 @@ var recordManager= {
 		
 		this.resetInputFields();
 		
-		$('#inputCancel').hide();
+		$("#inputCancel").attr('disabled', true);
 	},
 	
 	resetInputFields : function(){
@@ -41,7 +41,8 @@ var recordManager= {
 	},
 	
 	setStateModify : function(rowNum, data){
-		$('#inputCancel').show();
+		$("#inputCancel").attr('disabled', false);
+		
 		$.each(data, function(field, val){
 			if($('#input' + field).length === 0){
 				return true; // skip to next record
@@ -60,11 +61,10 @@ var recordManager= {
 	bind : function(){
 		var $this = this;
 		
-		$('#recordListTable .dataTables_filter label').click(function(){
-			$('#recordListTable .dataTables_filter input').val('').keyup();
-		});
-		
 		$('#inputSave').click(function(){
+			if($this.editIdx === null)
+				return;
+			
 			$.ajax({
 				'url' : 'index.php?action=save',
 				'type' : 'post',
@@ -100,7 +100,7 @@ var recordManager= {
 				$this.editIdx = newRowNum;
 			}
 			$this.records[$this.editIdx]['val'] = $('#inputval').val();
-			$('#inputCancel').show();
+			$("#inputCancel").attr('disabled', false);
 		});
 		
 		this.bindRows();
@@ -118,6 +118,10 @@ var recordManager= {
 	bindRows : function(){
 		var $this = this;
 
+		$('#recordListTable .dataTables_filter label').click(function(){
+			$('#recordListTable .dataTables_filter input').val('').keyup();
+		});
+		
 		$('#myTable').on('click', '.editRow', function(){
 			var idParts = this.parentNode.parentNode.id.split('_');
 			var rowNum = idParts[idParts.length - 1];
