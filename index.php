@@ -10,6 +10,7 @@ create table records (id int(11) not null auto_increment, val integer(11) not nu
 
 $dsn = 'mysql:host=localhost;dbname=testdb';
 $db = new PDO($dsn, 'root', '');
+$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 require_once('./class/lib/frontcontroller.php');
 frontcontroller::dispatch($_REQUEST, $db);

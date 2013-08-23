@@ -12,11 +12,19 @@ class records{
 		$rslt = $stmt->fetchAll(PDO::FETCH_ASSOC);
 		
 		return $rslt;
-// 		return 	
-// 			array(
-// 				array('id' => 10, 'val' => 105),
-// 				array('id' => 21, 'val' => 206)
-// 			);
+	}
+
+	public function getSubrecords($db){
+		$stmt = $db->prepare('
+			SELECT
+				r.*, sr.*
+			FROM records r
+			JOIN subrecords sr ON (r.id = sr.id_records);');
+	
+		$stmt->execute();
+		$rslt = $stmt->fetchAll(PDO::FETCH_ASSOC);
+		
+		return $rslt;
 	}
 	
 	public function saveRecord($data, $db){
